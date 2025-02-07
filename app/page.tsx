@@ -1,101 +1,243 @@
-import Image from "next/image";
+"use client";
+import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
-export default function Home() {
+interface Section {
+  title: string;
+  fields: Record<string, string>;
+}
+
+const predefinedFields = {
+  "Production Type": "",
+  "Net Quantity": "",
+  Performance: "",
+  "Reject Rate": "",
+  "Major Downtime": "",
+};
+
+const Home = () => {
+  const [sections, setSections] = useState<Section[]>([
+    { title: "Shift A (Day)", fields: { ...predefinedFields } },
+  ]);
+  const [productionDate, setProductionDate] = useState("");
+  const [copied, setCopied] = useState(false);
+  const lastSectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (lastSectionRef.current) {
+      lastSectionRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [sections]);
+
+  const toTitleCase = (str: string) => {
+    return str
+      .toLowerCase()
+      .replace(/(^\w|\s\w)/g, (char) => char.toUpperCase());
+  };
+
+  const handleChange = (sectionIndex: number, key: string, value: string) => {
+    setSections((prev) => {
+      const updatedSections = [...prev];
+      updatedSections[sectionIndex].fields[key] = value.trim();
+      return updatedSections;
+    });
+  };
+
+  const clearSection = (index: number) => {
+    setSections((prev) => {
+      const updatedSections = [...prev];
+      updatedSections[index] = {
+        title: "New Section",
+        fields: { ...predefinedFields },
+      };
+      return updatedSections;
+    });
+  };
+
+  const deleteSection = (index: number) => {
+    setSections((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addSection = () => {
+    setSections((prev) => [
+      ...prev,
+      { title: "New Section", fields: { ...predefinedFields } },
+    ]);
+  };
+
+  const trimTitleOnBlur = (index: number) => {
+    setSections((prev) => {
+      const updatedSections = [...prev];
+      updatedSections[index].title = updatedSections[index].title.trim();
+      return updatedSections;
+    });
+  };
+
+  const updateTitle = (index: number, title: string) => {
+    setSections((prev) => {
+      const updatedSections = [...prev];
+      updatedSections[index].title = toTitleCase(title);
+      return updatedSections;
+    });
+  };
+
+  const generateMarkdown = () => {
+    return (
+      `# Production Date: ${productionDate} ${
+        productionDate ? "E.C" : "---"
+      }\n\n` +
+      sections
+        .filter(({ fields }) =>
+          Object.values(fields).some((value) => value.trim() !== "")
+        )
+        .map(
+          ({ title, fields }) =>
+            `## **${title}**\n\n` +
+            Object.entries(fields)
+              .map(([key, value]) => {
+                let suffix = "";
+                if (key === "Net Quantity") suffix = " packs";
+                if (key === "Performance" || key === "Reject Rate")
+                  suffix = "%";
+                return ` 🔹 ${key}: ${
+                  value.trim() !== "" ? `**${value}**` + suffix : "***"
+                }\n\n`;
+                // if (key === "Major Downtime") return ` ${key}: ${value.trim()} !== "" ? `${value}`: "***"
+              })
+              .join("")
+        )
+        .join("")
+    );
+  };
+
+  const generateMarkdownUserView = () => {
+    return (
+      `# Production Date: ${productionDate} ${
+        productionDate ? "E.C" : "---"
+      }\n\n` +
+      sections
+        .filter(({ fields }) =>
+          Object.values(fields).some((value) => value.trim() !== "")
+        )
+        .map(
+          ({ title, fields }) =>
+            `## **${title}**\n\n` +
+            Object.entries(fields)
+              .map(([key, value]) => {
+                let suffix = "";
+                if (key === "Net Quantity") suffix = " packs";
+                if (key === "Performance" || key === "Reject Rate")
+                  suffix = "%";
+                return ` 🔹 ${key}: ${
+                  value.trim() !== "" ? `**${value}**` + suffix : "***"
+                }\n\n`;
+              })
+              .join("")
+        )
+        .join(".\n\n")
+    );
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generateMarkdown()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="p-6 min-h-screen bg-gray-100 flex flex-col md:flex-row gap-6 text-black">
+      <div className="w-full md:w-1/2 overflow-auto max-h-[80vh]">
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6 flex items-center">
+          <h2 className="text-2xl font-semibold mr-4">Production Date:</h2>
+          <input
+            type="text"
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-500 w-32"
+            value={productionDate}
+            placeholder="dd/mm/yy"
+            onChange={(e) => setProductionDate(e.target.value)}
+          />{" "}
+          <p className="pl-3"> E.C</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {sections.map((section, sectionIndex) => (
+          <div
+            key={sectionIndex}
+            ref={sectionIndex === sections.length - 1 ? lastSectionRef : null}
+            className="bg-white p-6 rounded-lg shadow-md mb-6"
+          >
+            <input
+              type="text"
+              className="w-full text-2xl font-semibold mb-4 border rounded-lg px-2 py-1"
+              value={section.title}
+              onBlur={() => trimTitleOnBlur(sectionIndex)}
+              onChange={(e) => updateTitle(sectionIndex, e.target.value)}
+            />
+            {Object.keys(section.fields).map((key) => (
+              <div key={key} className="mb-4 flex items-center">
+                <label className="text-gray-700 font-medium w-1/3">{key}</label>
+                {key === "Major Downtime" ? (
+                  <textarea
+                    className="w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500 resize-y"
+                    value={section.fields[key]}
+                    onChange={(e) =>
+                      handleChange(sectionIndex, key, e.target.value)
+                    }
+                    placeholder={`Enter ${key}`}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    className="w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                    value={section.fields[key]}
+                    onChange={(e) =>
+                      handleChange(sectionIndex, key, e.target.value)
+                    }
+                    placeholder={`Enter ${key}`}
+                  />
+                )}
+              </div>
+            ))}
+            <button
+              className="mt-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+              onClick={() => clearSection(sectionIndex)}
+            >
+              Clear
+            </button>
+            {sectionIndex !== 0 && (
+              <button
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 ml-2"
+                onClick={() => deleteSection(sectionIndex)}
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+          onClick={addSection}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Add Section
+        </button>
+      </div>
+
+      <div className="w-full md:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-auto max-h-[80vh]">
+        <h2 className="text-2xl font-semibold mb-4">Live Markdown Preview</h2>
+        <div className="border p-4 bg-gray-50 rounded-lg">
+          <ReactMarkdown>{generateMarkdownUserView()}</ReactMarkdown>
+        </div>
+        <button
+          className={`mt-4 px-4 py-2 rounded-lg text-white ${
+            copied ? "bg-green-500" : "bg-blue-500 hover:bg-blue-600"
+          }`}
+          onClick={copyToClipboard}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;
