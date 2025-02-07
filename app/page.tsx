@@ -85,16 +85,16 @@ const Home = () => {
 
   const generateMarkdown = () => {
     return (
-      `# Production Date: ${productionDate} ${
+      `## Production Date: ${productionDate} ${
         productionDate ? "E.C" : "---"
-      }\n\n` +
+      }\n` +
       sections
         .filter(({ fields }) =>
           Object.values(fields).some((value) => value.trim() !== "")
         )
         .map(
           ({ title, fields }) =>
-            `## **${title}**\n\n` +
+            `## ${title}\n` +
             Object.entries(fields)
               .map(([key, value]) => {
                 let suffix = "";
