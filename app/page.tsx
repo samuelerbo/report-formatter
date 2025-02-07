@@ -66,6 +66,17 @@ const Home = () => {
     );
   };
 
+  const isCopyDisabled = () => {
+    return (
+      !productionDate.trim() ||
+      sections.some(
+        (section) =>
+          !section.title.trim() ||
+          Object.values(section.fields).every((value) => value.trim() === "")
+      )
+    );
+  };
+
   const addSection = () => {
     if (!isAnySectionEmpty()) {
       setSections((prev) => [
@@ -118,7 +129,7 @@ const Home = () => {
                 if (key === "Net Quantity") suffix = "packs";
                 if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
 
-                return `🔹 ${key}: ${
+                return `🔹 **${key}**: ${
                   value.trim() !== ""
                     ? suffix === ""
                       ? `**${value}**`
@@ -154,9 +165,14 @@ const Home = () => {
                 if (key === "Net Quantity") suffix = " Packs";
                 if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
 
-                return ` 🔹 ${key}: ${
-                  value.trim() !== "" ? `**${value}**` + suffix : "***\n"
-                }\n\n`;
+                let formattedValue =
+                  value.trim() !== "" ? `**${value}**` + suffix : "***\n";
+
+                if (key === "majorDowntime") {
+                  formattedValue = formattedValue.replace(/\n/g, "  \n"); // Adds line breaks in Markdown
+                }
+
+                return `${key}: ${formattedValue}\n\n`;
               })
               .join("")
         )
@@ -165,10 +181,12 @@ const Home = () => {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generateMarkdown()).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (!isCopyDisabled()) {
+      navigator.clipboard.writeText(generateMarkdown()).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
   };
   return (
     <div className="p-6 min-h-screen bg-gray-100 flex flex-col md:flex-row gap-6 text-black">
@@ -266,9 +284,12 @@ const Home = () => {
         </div>
         <button
           className={`mt-4 px-4 py-2 rounded-lg text-white ${
-            copied ? "bg-green-500" : "bg-blue-500 hover:bg-blue-600"
+            isCopyDisabled()
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
           }`}
           onClick={copyToClipboard}
+          disabled={isCopyDisabled()}
         >
           {copied ? "Copied!" : "Copy"}
         </button>
