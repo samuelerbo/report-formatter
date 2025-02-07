@@ -17,7 +17,7 @@ const predefinedFields = {
 
 const Home = () => {
   const [sections, setSections] = useState<Section[]>([
-    { title: "Shift A (Day)", fields: { ...predefinedFields } },
+    { title: "New Section", fields: { ...predefinedFields } },
   ]);
   const [productionDate, setProductionDate] = useState("");
   const [copied, setCopied] = useState(false);
