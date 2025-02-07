@@ -38,7 +38,9 @@ const Home = () => {
   const handleChange = (sectionIndex: number, key: string, value: string) => {
     setSections((prev) => {
       const updatedSections = [...prev];
-      updatedSections[sectionIndex].fields[key] = value.trim();
+
+      updatedSections[sectionIndex].fields[key] =
+        key === "Major Downtime" ? value : value.trim();
       return updatedSections;
     });
   };
@@ -97,12 +99,11 @@ const Home = () => {
               .map(([key, value]) => {
                 let suffix = "";
                 if (key === "Net Quantity") suffix = " packs";
-                if (key === "Performance" || key === "Reject Rate")
-                  suffix = "%";
-                return ` 🔹 ${key}: ${
+                if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
+
+                return `🔹 **${key}**: ${
                   value.trim() !== "" ? `**${value}**` + suffix : "***"
                 }\n\n`;
-                // if (key === "Major Downtime") return ` ${key}: ${value.trim()} !== "" ? `${value}`: "***"
               })
               .join("")
         )
@@ -126,10 +127,10 @@ const Home = () => {
               .map(([key, value]) => {
                 let suffix = "";
                 if (key === "Net Quantity") suffix = " packs";
-                if (key === "Performance" || key === "Reject Rate")
-                  suffix = "%";
+                if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
+
                 return ` 🔹 ${key}: ${
-                  value.trim() !== "" ? `**${value}**` + suffix : "***"
+                  value.trim() !== "" ? `**${value}**` + suffix : "***\n"
                 }\n\n`;
               })
               .join("")
@@ -144,7 +145,6 @@ const Home = () => {
       setTimeout(() => setCopied(false), 2000);
     });
   };
-
   return (
     <div className="p-6 min-h-screen bg-gray-100 flex flex-col md:flex-row gap-6 text-black">
       <div className="w-full md:w-1/2 overflow-auto max-h-[80vh]">
@@ -155,6 +155,7 @@ const Home = () => {
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-500 w-32"
             value={productionDate}
             placeholder="dd/mm/yy"
+            required={true}
             onChange={(e) => setProductionDate(e.target.value)}
           />{" "}
           <p className="pl-3"> E.C</p>
