@@ -49,7 +49,7 @@ const Home = () => {
     setSections((prev) => {
       const updatedSections = [...prev];
       updatedSections[index] = {
-        title: "New Section",
+        title: "",
         fields: { ...predefinedFields },
       };
       return updatedSections;
@@ -60,17 +60,33 @@ const Home = () => {
     setSections((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addSection = () => {
-    setSections((prev) => [
-      ...prev,
-      { title: "New Section", fields: { ...predefinedFields } },
-    ]);
+  const isAnySectionEmpty = () => {
+    return sections.some((section) =>
+      Object.values(section.fields).every((value) => value.trim() === "")
+    );
   };
 
+  const addSection = () => {
+    if (!isAnySectionEmpty()) {
+      setSections((prev) => [
+        ...prev,
+        { title: "", fields: { ...predefinedFields } },
+      ]);
+    }
+  };
   const trimTitleOnBlur = (index: number) => {
     setSections((prev) => {
       const updatedSections = [...prev];
       updatedSections[index].title = updatedSections[index].title.trim();
+      return updatedSections;
+    });
+  };
+
+  const trimTextAreaOnBlur = (sectionIndex: number, key: string) => {
+    setSections((prev) => {
+      const updatedSections = [...prev];
+      updatedSections[sectionIndex].fields[key] =
+        updatedSections[sectionIndex].fields[key].trim();
       return updatedSections;
     });
   };
@@ -129,11 +145,13 @@ const Home = () => {
         )
         .map(
           ({ title, fields }) =>
-            `## **${title}**\n\n` +
+            `\n## ${
+              title ? `**${title}**` : `------- No Title Given ----`
+            }\n\n` +
             Object.entries(fields)
               .map(([key, value]) => {
                 let suffix = "";
-                if (key === "Net Quantity") suffix = " packs";
+                if (key === "Net Quantity") suffix = " Packs";
                 if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
 
                 return ` 🔹 ${key}: ${
@@ -154,7 +172,7 @@ const Home = () => {
   };
   return (
     <div className="p-6 min-h-screen bg-gray-100 flex flex-col md:flex-row gap-6 text-black">
-      <div className="w-full md:w-1/2 overflow-auto max-h-[80vh]">
+      <div className="w-full md:w-1/2 overflow-auto max-h-[90vh]">
         <div className="bg-white p-6 rounded-lg shadow-md mb-6 flex items-center">
           <h2 className="text-2xl font-semibold mr-4">Production Date:</h2>
           <input
@@ -183,21 +201,26 @@ const Home = () => {
               onChange={(e) => updateTitle(sectionIndex, e.target.value)}
             />
             {Object.keys(section.fields).map((key) => (
-              <div key={key} className="mb-4 flex items-center">
-                <label className="text-gray-700 font-medium w-1/3">{key}</label>
+              <div key={key} className="mb-4 flex flex-col md:flex-row">
+                <label className="text-gray-700 font-medium w-full md:w-1/3">
+                  {key}
+                </label>
                 {key === "Major Downtime" ? (
                   <textarea
-                    className="w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500 resize-y"
+                    className="md:w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500 resize-y"
                     value={section.fields[key]}
-                    onChange={(e) =>
-                      handleChange(sectionIndex, key, e.target.value)
-                    }
+                    onChange={(e) => {
+                      handleChange(sectionIndex, key, e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = e.target.scrollHeight + "px";
+                    }}
+                    onBlur={() => trimTextAreaOnBlur(sectionIndex, key)}
                     placeholder={`Enter ${key}`}
                   />
                 ) : (
                   <input
                     type="text"
-                    className="w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                    className="md:w-2/3 px-4 py-2 mt-1 border rounded-lg focus:outline-none focus:ring focus:border-blue-500"
                     value={section.fields[key]}
                     onChange={(e) =>
                       handleChange(sectionIndex, key, e.target.value)
@@ -224,15 +247,20 @@ const Home = () => {
           </div>
         ))}
         <button
-          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+          className={`mt-4 px-4 py-2 rounded-lg text-white ${
+            isAnySectionEmpty()
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          }`}
           onClick={addSection}
+          disabled={isAnySectionEmpty()}
         >
           Add Section
         </button>
       </div>
 
-      <div className="w-full md:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-auto max-h-[80vh]">
-        <h2 className="text-2xl font-semibold mb-4">Live Markdown Preview</h2>
+      <div className="w-full md:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-auto max-h-[90vh]">
+        <h2 className="text-2xl font-semibold mb-4">Live Preview</h2>
         <div className="border p-4 bg-gray-50 rounded-lg">
           <ReactMarkdown>{generateMarkdownUserView()}</ReactMarkdown>
         </div>
