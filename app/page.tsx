@@ -17,7 +17,7 @@ const predefinedFields = {
 
 const Home = () => {
   const [sections, setSections] = useState<Section[]>([
-    { title: "New Section", fields: { ...predefinedFields } },
+    { title: "", fields: { ...predefinedFields } },
   ]);
   const [productionDate, setProductionDate] = useState("");
   const [copied, setCopied] = useState(false);
@@ -85,24 +85,31 @@ const Home = () => {
 
   const generateMarkdown = () => {
     return (
-      `## Production Date: ${productionDate} ${
+      `### Production Date: ${productionDate} ${
         productionDate ? "E.C" : "---"
-      }\n` +
+      }\n\n` +
       sections
         .filter(({ fields }) =>
           Object.values(fields).some((value) => value.trim() !== "")
         )
         .map(
           ({ title, fields }) =>
-            `## ${title}\n` +
+            `#### ${title}` +
+            "\n---------\n" +
             Object.entries(fields)
               .map(([key, value]) => {
                 let suffix = "";
-                if (key === "Net Quantity") suffix = " packs";
+                if (key === "Net Quantity") suffix = "packs";
                 if (["Performance", "Reject Rate"].includes(key)) suffix = "%";
 
-                return `🔹 **${key}**: ${
-                  value.trim() !== "" ? `**${value}**` + suffix : "***"
+                return `🔹 ${key}: ${
+                  value.trim() !== ""
+                    ? suffix === ""
+                      ? `**${value}**`
+                      : key === "Net Quantity"
+                      ? `**${value} ${suffix}**`
+                      : `**${value}${suffix}**`
+                    : "***"
                 }\n\n`;
               })
               .join("")
@@ -170,6 +177,7 @@ const Home = () => {
             <input
               type="text"
               className="w-full text-2xl font-semibold mb-4 border rounded-lg px-2 py-1"
+              placeholder="Enter Title"
               value={section.title}
               onBlur={() => trimTitleOnBlur(sectionIndex)}
               onChange={(e) => updateTitle(sectionIndex, e.target.value)}
